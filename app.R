@@ -14,7 +14,9 @@ utr_tbl<-read.csv(file = "plot_stops.txt", sep = '\t', header = TRUE, na.strings
 url1 <- a("Recommendations for clinical interpretation of variants found in non-coding regions of the genome", href="https://link.springer.com/article/10.1186/s13073-022-01073-3")
 url2 <- a("Systematic identification of disease-causing promoter and untranslated region variants in 8,040 undiagnosed individuals with rare disease", href="https://www.medrxiv.org/content/10.1101/2023.09.12.23295416v1")
 url3 <- a("Loss of function SMAD4 nonstop mutations in human cancer", href="https://onlinelibrary.wiley.com/doi/full/10.1111/his.14880")
-url4 <- a("Rare Disease Genomics.org", href="https://rarediseasegenomics.org")
+url4 <- a("website", href="https://rarediseasegenomics.org")
+url5 <- a("GitHub repo", href="https://github.com/Computational-Rare-Disease-Genomics-WHG/inframe_stop_app")
+
 
 ui <- fluidPage(
   theme = shinytheme("lumen"), # https://rstudio.github.io/shinythemes/
@@ -24,12 +26,11 @@ ui <- fluidPage(
   sidebarLayout(
     # Sidebar panel for inputs ----
     sidebarPanel(
-      h4(paste0("Hello ", "you ;)")),
       h2("Data Selection Options"),
       radioButtons("radio",
-                   h3("Select codon"), 
-                   choices = list("Start (in dev. DO NOT USE)" = 1, 
-                                  "Stop" = 2),
+                   h6(""), 
+                   choices = list( 
+                                  "Disrupted stop codons" = 2),
                    selected = 2),
       h3("Search by gene"),
       textInput(inputId = "free_gene",label = "Input gene ID (ENS/Stable) - Note Greek letters should be converted to English form e.g. β = B",placeholder = "e.g MEF2C"),
@@ -43,19 +44,31 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel(strong("Consequence information"), tableOutput("tabledata"),),
                   tabPanel(strong("Consequence plots"), plotOutput("UTR")),
-                  tabPanel(strong("About"), h3("About the Rescue Stop Site"),h5("The disruption of stop codons has been found to cause disease, but the interpretation of possible consequences of such disruptions is often difficult.One way of identifying the potential deleteriousness of a disrupted stop codon is to determine the extent to which the CDS has been extended, and the 3’UTR expunged."),h5("<Note on effects of CDS extension>"),h5("The 3’ UTR of a given gene includes important regulatory elements, including polyA sies and signals, downstream open reading frames (dORFs), and RNA binding protein binding sites. When these elements are disrupted it has been shown to lead to disease phenotypes."),
-                           h5("The Rescue Stop Site provides the location of the next available in-frame stop codon, and both the extension of CDS that would be created if it were to be used, and the proportion of 3’ UTR that would be lost. This is currently limited to Ensembl transcripts (release 110). Read more about the role of 3' UTRs, regulatory variants in disease, and the consequences of stop loss in the following papers:"),
+                  tabPanel(strong("About"), h3("About the Rescue Stop Site"),
+                           tagList("The disruption of stop codons has been found to cause disease, but the interpretation of possible consequences of such disruptions is often difficult.One way of identifying the potential deleteriousness of a disrupted stop codon is to determine the extent to which the CDS has been extended, and the 3’UTR expunged."),
+                           h5(""),
+                           tagList("<Note on effects of CDS extension>"),
+                           h5(""),
+                           tagList("The 3’ UTR of a given gene includes important regulatory elements, including polyA sies and signals, downstream open reading frames (dORFs), and RNA binding protein binding sites. When these elements are disrupted it has been shown to lead to disease phenotypes."),
+                           h5(""),
+                           tagList("The Rescue Stop Site provides the location of the next available in-frame stop codon, and both the extension of CDS that would be created if it were to be used, and the proportion of 3’ UTR that would be lost. This is currently limited to Ensembl transcripts (release 110). Read more about the role of 3' UTRs, regulatory variants in disease, and the consequences of stop loss in the following papers:"),
+                           h5(""),
                            tagList("1 : Ellingford et al, ", url1, ", Genome Medicine (2023)."),
                            h5(""),
                            tagList("2 : Martin-Geary et al, ", url2, ", medRxiv (2023)."),
                            h5(""),
                            tagList("3 : Bauer et al (2023),", url3, ", Histopathology (2023)."),
-                           h3("About the Team"),h5("The Rescue Stop Site was developed by the Computational Rare Disease Genomics Lab (CRDG). CRDG specialises in identifying the role of non-protein-coding variants in rare genetic diseases through the use of bioinformatics on large exome and genome sequencing datasets. We are based out of the Big Data Institute at the University of Oxford. You can learn more about our lab at our website:"),
-                           tagList("", url4),
-                           h3("Tools and Data"), h5("The Rescue Stop Site was built using R version 4.3.1 (2023-06-16), R studio version 2023.09.0+463, and the packages ‘base’, ‘utils’, ‘ggplot2’, ’shiny’, 'shinyjs', ’shinytheme’, ’stats’, ’dplyr’, ’tidyr’, ’stringr’, ’beepr’ and ‘Biostrings’. Data was collected using the ‘biomaRt’ R package and Ensembl release 110."),h5("All code and data is available through our GitHub repo <insert here> If you face any issues or wish to report a bug whilst using the Rescue Stop Site please get in touch with us by opening up an issue in our repository's GitHub page."),
-                           h3("Acknowledgements"),h5("This work was funded through Wellcome Trust and the Royal Society (Sir Henry Dale Fellowship awarded to Nicola Whiffin; 220134/Z/20/Z) and the Rosetrees Trust (H5R01320). The ShinyTheme \"lumen\" was used for generating the template for this application. Our DNA Logo icon was created by  Freepik - Flaticon. All rights reserved for their respective owners."),
-                           h1(""),
-                           h1("")),
+                           h3("About the Team"),
+                           h5(""),
+                           tagList("The Rescue Stop Site was developed by the Computational Rare Disease Genomics Lab (CRDG). CRDG specialises in identifying the role of non-protein-coding variants in rare genetic diseases through the use of bioinformatics on large exome and genome sequencing datasets. We are based out of the Big Data Institute at the University of Oxford. You can learn more about our lab at our ",url4,"."),
+                           h3("Tools and Data"), 
+                           h5(""),
+                           tagList("The Rescue Stop Site was built using R version 4.3.1 (2023-06-16), R studio version 2023.09.0+463, and the packages ‘base’, ‘utils’, ‘ggplot2’, ’shiny’, 'shinyjs', ’shinytheme’, ’stats’, ’dplyr’, ’tidyr’, ’stringr’, ’beepr’ and ‘Biostrings’. Data was collected using the ‘biomaRt’ R package and Ensembl release 110."),
+                           h5(""),
+                           tagList("All code and data is available through our GitHub repo <insert here> If you face any issues or wish to report a bug whilst using the Rescue Stop Site please get in touch with us by opening up an issue in our repository's ", url5),
+                           h3("Acknowledgements"),
+                           h5(""),
+                           tagList("This work was funded through Wellcome Trust and the Royal Society (Sir Henry Dale Fellowship awarded to Nicola Whiffin; 220134/Z/20/Z) and the Rosetrees Trust (H5R01320). The ShinyTheme \"lumen\" was used for generating the template for this application. Our DNA Logo icon was created by  Freepik - Flaticon. All rights reserved for their respective owners."),)
       )
     )
   )
