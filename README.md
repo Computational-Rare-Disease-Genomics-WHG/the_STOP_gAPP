@@ -1,5 +1,5 @@
-# the Rescue Stop Site
-This is a repository of scripts, documents and data associated with the "Rescue Stop Site" RShiny app.
+# the STOP g.APP
+This is a repository of scripts, documents and data associated with the "the STOP g.APP" RShiny app.
 <br />
 ## The 'fast_stops_gh.r' file : 
 This is the script used for identification of proximal in-frame stops using Ensembl biomaRt. <br />
