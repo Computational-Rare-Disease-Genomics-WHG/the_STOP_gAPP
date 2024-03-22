@@ -1,0 +1,10 @@
+version: '3'
+services:
+  shiny:
+    build: .
+    ports:
+      - "3838:3838"
+    volumes:
+      - ./data:/srv/shiny-server/data
+      - ./data_scripts:/srv/shiny-server/data_scripts
+      - ./www:/srv/shiny-server/www
