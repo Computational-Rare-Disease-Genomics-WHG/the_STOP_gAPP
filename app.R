@@ -30,7 +30,6 @@ ref_stops<-read.csv(file = "data/basic_reference_stops.txt", sep = '\t', header 
 ref_stops<-subset(ref_stops, ensembl_transcript_id %in% utr_tbl$ENS_Transcript_id) #drop transcripts without a 3'UTR
 introns<-read.csv(file = "data/Reference_introns.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Coordinates of introns within 50bp of a stop
 stop_seq<-read.csv(file = "data/expanded_stop_seq.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
-maps<-read.csv(file = "data/MAPS_bed_detail_rescue_stops.bed", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
 
 #Add Mane Flag to transcript dropdown
 mane<-unique(stops[which(stops$mane %in% c("MANE_Select","MANE_Plus_Clinical")),c(1,21)])
