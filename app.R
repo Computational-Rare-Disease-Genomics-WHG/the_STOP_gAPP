@@ -9,7 +9,17 @@ library(png)
 library(dplyr)
 library(stringr)
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+options(shiny.port = 3838)
+# Check if the environment variable SHINY_PROD is set to 1
+if (Sys.getenv("SHINY_PROD") == "1") {
+  # Set working directory to /home/shiny-app in production
+  setwd("/home/shiny-app")
+} else {
+  # Get the path of the active document in RStudio
+  active_doc_path <- rstudioapi::getActiveDocumentContext()$path
+  # Set working directory to the directory containing the active document
+  setwd(dirname(active_doc_path))
+}
 ##### Test Variants #####
 #x<-"cHr5:88722604_T/G" SNV (Disrupting) MEF2C -REV
 #x<-"cHr12:8941818_C/T" SNV (Preserving) M6PR -REV
@@ -228,7 +238,7 @@ url8 <- a("LOEUF", href="https://www.nature.com/articles/s41586-020-2308-7")
 #Define user interface
 ui <- fluidPage(
   theme = shinytheme("lumen"), # https://rstudio.github.io/shinythemes/
-  titlePanel(title=div(h1("the STOP g.APP [BETA]", style = "font-size:40px;color:navy;", img(src="dna.png", height = 100, width = 110, style="position:absolute;right:40px;z-index:1000000;")))),
+  titlePanel(title=div(h1("the STOP g.APP [BETA]", style = "font-size:40px;color:navy;", img(src="https://vutr.rarediseasegenomics.org/static/dna.png", height = 100, width = 110, style="position:absolute;right:40px;z-index:1000000;")))),
   sidebarLayout(
     sidebarPanel(
       h2("Data Selection Options"),
@@ -438,6 +448,13 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui = ui, server)
+
+if (Sys.getenv("SHINY_PROD") == "1") {
+  # Run the application on 
+  runApp(shinyApp(ui = ui, server), host = "0.0.0.0", port = 3838)
+} else {
+  shinyApp(ui = ui, server)
+}
+
 
 #END#
