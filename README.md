@@ -1,4 +1,6 @@
 # the STOP g.APP
+
+BETA release available here: https://stopgapp.elstondsouza.com/ <br />
 This is a repository of scripts, documents and data associated with the "the STOP g.APP" RShiny app.
 Variants that intersect stop codons have been strongly linked to a broad range of both rare, and common human genetic conditions, including cardiomyopathies, hearing loss and diabetes. However, interpreting the impact of any stop-loss variant is not straightforward as (1) the effect of addition of amino acids to the C-terminus on protein function is difficult to predict, and (2) if there is no alternative stop codon upstream of the polyadenylation signal the transcript may be degraded by non-stop decay. Differentiating variants that are likely to be deleterious from those that are likely tolerated often requires specialist analysis and skills as, at present, there are no tools available to assist in the interpretation of variants of this kind. 
 <br />
