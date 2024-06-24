@@ -36,8 +36,6 @@ ref_stops<-read.csv(file = "data/basic_reference_stops.txt", sep = '\t', header 
 introns<-read.csv(file = "data/Reference_introns.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Coordinates of introns within 50bp of a stop
 stop_seq<-read.csv(file = "data/expanded_stop_seq.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
 maps<-read.csv(file = "data/MAPS_bed_detail_rescue_stops.bed", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
-cds_length<-read.csv(file = "/Users/alexmg/shiny_apps/stop_start_app/data/cds_exon_length.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #CDS length info
-cds_seq<-read.csv(file = "/Users/alexmg/shiny_apps/stop_start_app/data/cds_exon_sequences.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #CDS exon sequences
 
 #Add Mane Flag to transcript dropdown
 mane<-unique(stops[which(stops$mane %in% c("MANE_Select","MANE_Plus_Clinical")),c(1,21)])
