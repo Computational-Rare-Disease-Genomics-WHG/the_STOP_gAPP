@@ -2,13 +2,13 @@ rm(list = ls(all.names = TRUE))
 library(ggplot2)
 library(dplyr)
 library(Biostrings)
+library(stringr)
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ####################################################
 ########## GET REFERENCE STOP COORDINATES ##########
 ####################################################
 #get a full set of havanna/havanna_ensembl protein coding transcripts in chrs 1:22/X/Y
-stops <- read.table('/input/Homo_sapiens.GRCh38.110.gtf', header = FALSE, sep = '\t')
+stops <- read.table('/Users/alexmg/shiny_apps/stop_start_app/input/Homo_sapiens.GRCh38.110.gtf', header = FALSE, sep = '\t')
 stops<-subset(stops, V1 %in% c(1:22,"X","Y"))
 stops$biotype<- str_match(stops$V9, "gene_biotype\\s*(.*?);\\s*transcript_")[,2]
 stops<-subset(stops, biotype %in% c("protein_coding") & (V2 == "havana" | V2 == "ensembl_havana"))
@@ -21,7 +21,7 @@ stops<-subset(stops, V3 == "stop_codon")
 ########## GET REFERENCE GENOME SEQUENCE ###########
 ####################################################
 #get genome and limit to nuclear chromosomes
-fasta<- readDNAStringSet('/input/GRCh38_latest_genomic.fna', format="fasta", skip=0L, seek.first.rec=FALSE, use.names=TRUE)
+fasta<- readDNAStringSet('/Users/alexmg/shiny_apps/stop_start_app/input/GRCh38_latest_genomic.fna', format="fasta", skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 seqName <- as.data.frame(names(fasta))
 colnames(seqName)[1]<-"header"
 seqName <- subset(seqName, grepl("NC", header) & !(grepl("mito", header)))
@@ -49,20 +49,22 @@ no_utr<-subset(stops, !(ensembl_transcript_id %in% utr$ensembl_transcript_id))
 #############################################################
 ####### GET STATS FOR FIRST IN-FRAME DOWNSTREAM STOP ########
 #############################################################
-new_stops<-read.table('/data/Closest_stops.txt', header = TRUE, sep = '\t')[c(20,16,1,7,11)]
+new_stops<-read.table('/Users/alexmg/shiny_apps/stop_start_app/data/Closest_stops.txt', header = TRUE, sep = '\t')[c(15,16,1,7,11)]
 nrow(as.data.frame(subset(stops, !(ensembl_transcript_id %in% new_stops$ensembl_transcript_id) & !(ensembl_transcript_id %in% no_utr$ensembl_transcript_id))))
-new_stops<-subset(new_stops, frame == "0" |frame == "No Stop in any frame" |(frame == "0" & flags == "No stop in this frame"))
+new_stops<-subset(new_stops, frame == "0" |flags == "No stop in any frame" |(frame == "0" & flags == "No stop in this frame"))
 stops<-merge(stops, new_stops, all.x=TRUE)
-stops$percent_protein_gain[which(stops$ensembl_transcript_id %in% no_utr$ensembl_transcript_id)]<-"NO_UTR"
+stops$aa_extension[which(stops$ensembl_transcript_id %in% no_utr$ensembl_transcript_id)]<-"NO_UTR"
 stops$frame[which(stops$ensembl_transcript_id %in% no_utr$ensembl_transcript_id)]<-"NO_UTR"
 stops$frame[which(stops$frame =="0")]<-"IN_FRAME"
 stops$frame[which(stops$flags == "No stop in this frame")]<-"NO_IN_FRAME_STOP"
+stops$frame[which(stops$flags == "No stop in any frame")]<-"NO_IN_FRAME_STOP"
 stops<-stops[,c(1,2,5,6,8,12:16)]
 remove(new_stops)
 gc()
+stops<-stops[which(stops$frame != "NO_UTR"),]
 stops2<-stops
 colnames(stops2)[2:4]<-c("chrom","start","end")
-write.table(stops2[,c(1:4,10)], file='/data/basic_reference_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(stops2[,c(1:4,10)], file='/Users/alexmg/shiny_apps/stop_start_app/data/basic_reference_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 
 ##################################################################
 ####### HANDLE REFERENCE STOPS THAT ARE SPLIT BY AN INTRON #######
@@ -188,22 +190,20 @@ stops$Disrupt_Preserve[which(stops$motif == "TAG" & stops$V7 == "-" & stops$moti
 #G to A at position 2 [C to T reverse]
 stops$Disrupt_Preserve[which(stops$motif == "TGA" & stops$V7 == "+" & stops$motif_position == "2")]<-"[A=PRES|T=DIS|C=DIS|G=REF]"
 stops$Disrupt_Preserve[which(stops$motif == "TGA" & stops$V7 == "-" & stops$motif_position == "2")]<-"[A=DIS|T=PRES|C=REF|G=DIS]"
-colnames(stops)<-c("ensembl_transcript_id", "chrom","start","end","reference_allele","motif_allele","motif","strand","position_in_motif","percent_protein_gain","frame","Disrupt_Preserve")
+colnames(stops)<-c("ensembl_transcript_id", "chrom","start","end","reference_allele","motif_allele","motif","strand","position_in_motif","aa_extension","frame","Disrupt_Preserve")
 
 
 #######################################################
 ##### ANNOTATE STOPS WITH NO DOWNSTREAM 'RESCUE' ######
 #######################################################
-no_stop<-subset(stops,frame == "No Stop in any frame")
-stops$frame[which(stops$ensembl_transcript_id %in% no_stop$ensembl_transcript_id)]<-"No Stop in any frame"
-write.table(stops, file='/data/MAPS_bed_coord_rescue_stops_full.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(stops, file='/Users/alexmg/shiny_apps/stop_start_app/data/MAPS_bed_coord_rescue_stops_full.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 
 
 ################################################################################
 ###### GET A BED DETAIL FILE OF REFERENCE STOP CODONS ON A PER-BASE BASIS ######
 ################################################################################
-#.bed detail file of reference stop coordinates, where the info field contains:1. The reference_allele, 2. The stop motif_allele, 3. The stop motif (as seen in mRNA), 4. The Strand, 5. The position in the stop motif (e.g. 1st/2nd/3rd),6. The percent_protein_gain, 7. The predicted outcome of each substitution (DIS=disrupting/PRES=preserving) in the following format [A=PRES|T=DIS|C=DIS|G=REF], 8. Ensembl transcript ID, 9. Frame - IN_FRAME/NO_IN_FRAME_STOP/No stop in any frame
-stops$attributes<-paste0(stops$reference_allele,";",stops$motif_allele,";",stops$motif,";",stops$strand,";",stops$position_in_motif,";",stops$percent_protein_gain,";",stops$Disrupt_Preserve,";",stops$ensembl_transcript_id,";",stops$frame,sep="")
+#.bed detail file of reference stop coordinates, where the info field contains:1. The reference_allele, 2. The stop motif_allele, 3. The stop motif (as seen in mRNA), 4. The Strand, 5. The position in the stop motif (e.g. 1st/2nd/3rd),6. The aa extension, 7. The predicted outcome of each substitution (DIS=disrupting/PRES=preserving) in the following format [A=PRES|T=DIS|C=DIS|G=REF], 8. Ensembl transcript ID, 9. Frame - IN_FRAME/NO_IN_FRAME_STOP
+stops$attributes<-paste0(stops$reference_allele,";",stops$motif_allele,";",stops$motif,";",stops$strand,";",stops$position_in_motif,";",stops$aa_extension,";",stops$Disrupt_Preserve,";",stops$ensembl_transcript_id,";",stops$frame,sep="")
 stops_bed<-stops[,c(2,3,4,13)]
 stops_bed$chrom[stops_bed$chrom == "X"]<-23
 stops_bed$chrom[stops_bed$chrom == "Y"]<-24
@@ -212,7 +212,7 @@ stops_bed<-stops_bed[order(as.numeric(as.character(stops_bed$chrom))),]
 stops_bed$chrom[stops_bed$chrom == "23"]<-"X"
 stops_bed$chrom[stops_bed$chrom == "24"]<-"Y"
 stops_bed$chrom<-paste("chr",stops_bed$chrom, sep="")
-write.table(stops_bed, file='/data/MAPS_bed_detail_rescue_stops.bed', quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
+write.table(stops_bed, file='/Users/alexmg/shiny_apps/stop_start_app/data/MAPS_bed_detail_rescue_stops.bed', quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
 
 #################################################################
 ###### GET A LIST OF PRESERVING SINGLE NUCLEOTIDE VARIANTS ######
@@ -233,5 +233,5 @@ stops$Pres[which(stops$motif == "TGA" & stops$strand == "+" & stops$position_in_
 stops$Pres[which(stops$motif == "TGA" & stops$strand == "-" & stops$position_in_motif == "2")]<-"T"
 stops<-stops[which(stops$Pres != "NONE"),c(1,2,4,5,14)]
 
-write.table(stops, file='/data/stop_preserving_variants.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(stops, file='/Users/alexmg/shiny_apps/stop_start_app/data/stop_preserving_variants.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 

@@ -11,12 +11,11 @@ gc()
 start.time <- Sys.time()
 #Timed at 28.34 Mins
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ####################################################
 ############### GET TRANSCRIPT DATA ################
 ####################################################
 #get a full set of havanna/havanna_ensembl protein coding transcripts
-ens_data <- read.table('/input/Homo_sapiens.GRCh38.110.gtf', header = FALSE, sep = '\t')
+ens_data <- read.table('/Users/alexmg/shiny_apps/stop_start_app/input/Homo_sapiens.GRCh38.110.gtf', header = FALSE, sep = '\t')
 ens_data$biotype<- str_match(ens_data$V9, "gene_biotype\\s*(.*?);\\s*transcript_")[,2]
 ens_data<-subset(ens_data, biotype %in% c("protein_coding") & (V2 == "havana" | V2 == "ensembl_havana"))
 ens_data<-subset(ens_data, V1 %in% c(1:22,"X","Y"))
@@ -28,7 +27,7 @@ stops<-subset(ens_data, V3 == "stop_codon")
 ens_data<-subset(ens_data, ensembl_transcript_id %in% stops$ensembl_transcript_id)
 utr<-subset(ens_data, V3 == "three_prime_utr") #Get the 3' UTR exons
 #Store a reference set of transcripts for downstream scripts
-write.table(ens_data, file='/data/full_havanna.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(ens_data, file='/Users/alexmg/shiny_apps/stop_start_app/data/full_havanna.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 #Get a list of transcripts without UTRs, and exclude them from core transcript list
 no_utr<-subset(ens_data, !(ensembl_transcript_id %in% utr$ensembl_transcript_id) & V3=="transcript")[,c(1:3,7,11)]
 ens_data<-subset(ens_data, !(ensembl_transcript_id %in% no_utr$ensembl_transcript_id))
@@ -51,7 +50,7 @@ remove(cds)
 ############ GET REFERENCE GENOME SEQUENCES AND 'REBUILD' RNA ############
 ##########################################################################
 #get NCBI reference genome sequence and limit to nuclear chromosomes
-fasta<- readDNAStringSet('/input/GRCh38_latest_genomic.fna', format="fasta", skip=0L, seek.first.rec=FALSE, use.names=TRUE)
+fasta<- readDNAStringSet('/Users/alexmg/shiny_apps/stop_start_app/input/GRCh38_latest_genomic.fna', format="fasta", skip=0L, seek.first.rec=FALSE, use.names=TRUE)
 seqName <- as.data.frame(names(fasta))
 colnames(seqName)[1]<-"header"
 seqName <- subset(seqName, grepl("NC", header) & !(grepl("mito", header)))
@@ -167,6 +166,7 @@ full_utr$genomic_start<-apply(full_utr, 1, function(t){
 
 #Add back transcripts without stops, record new stop as the end of the transcript and add non-stop decay flag, and populate as many of the remaiing columns as possible
 full_utr$flags<-""
+
 fu2<-fu2[,c(1,3)]
 fu2<-unique(fu2)
 fu2<-subset(fu2, !(ensembl_transcript_id %in% full_utr$ensembl_transcript_id))
@@ -174,11 +174,13 @@ fu2$Stop_start_position<-fu2$utr_length
 fu2$flags<-"No stop in any frame"
 fu2<-merge(fu2,utr,all.x=TRUE)
 fu2[setdiff(names(full_utr), names(fu2))] <- NA
+
 full_utr<-rbind(full_utr,fu2)
 nrow(as.data.frame(unique(full_utr$ensembl_transcript_id)))
-remove(fu2,utr)
+remove(utr)
 gc()
 
+write.table(full_utr, file='/Users/alexmg/shiny_apps/stop_start_app/data/temp.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 
 ##############################################################
 ############ CALCULATE ADDITIONAL ANNOTATION DATA ############
@@ -187,10 +189,13 @@ gc()
 full_utr<-merge(full_utr,ens_transcripts,all.x=TRUE)
 
 #Calculate extensions (AA, NT, frame, and Prop UTR loss)
-full_utr$nt_extension<-(as.numeric(full_utr$Stop_start_position)-1)+3 #+3 to add the reference stop as an amino acid that is otherwise not counted
+full_utr$nt_extension<-""
+full_utr$aa_extension<-""
+full_utr$frame<-as.numeric(as.numeric(full_utr$Stop_start_position)-1) %% 3
+full_utr$nt_extension[which(full_utr$frame == 0)]<-(as.numeric(full_utr$Stop_start_position[which(full_utr$frame == 0)])-1)+3 #+3 to add the reference stop as an amino acid that is otherwise not counted
+full_utr$nt_extension[which(full_utr$frame == 1)]<-(as.numeric(full_utr$Stop_start_position[which(full_utr$frame == 1)])-1)+5 #+3 to add the reference stop as an amino acid that is otherwise not counted and a further 2 to account for frame change
+full_utr$nt_extension[which(full_utr$frame == 2)]<-(as.numeric(full_utr$Stop_start_position[which(full_utr$frame == 2)])-1)+4 #+3 to add the reference stop as an amino acid that is otherwise not counted and a further 1 to account for frame change
 full_utr$aa_extension<-(as.numeric(full_utr$nt_extension)/3)
-full_utr$frame<-as.numeric(full_utr$nt_extension) %% 3
-full_utr$frame[which(full_utr$flags == "No stop in any frame")]<-"No Stop in any frame"
 
 #Include non-stop decay entries for transcripts where the only stops are in alternate frames (So there will always be at least one entry per transcript per frame)
 no_in<-subset(ens_transcripts[1], !(ensembl_transcript_id %in% full_utr$ensembl_transcript_id[which(full_utr$frame == 0)]))
@@ -200,7 +205,7 @@ no_2<-subset(ens_transcripts[1], !(ensembl_transcript_id %in% full_utr$ensembl_t
 ##FRAME
 #inframe
 no_in<-subset(full_utr[,c(1,2,5,8,9,15:20)], ensembl_transcript_id %in% no_in$ensembl_transcript_id)
-no_in$nt_extension<-no_in$utr_length+3
+no_in$nt_extension<-no_in$utr_length+3 #+3 to add the reference stop as an amino acid that is otherwise not counted
 no_in$aa_extension<-no_in$nt_extension/3
 no_in$frame<-"0"
 no_in$flags<-"No stop in this frame"
@@ -216,6 +221,7 @@ no_2$nt_extension<-no_2$utr_length+3
 no_2$aa_extension<-no_2$nt_extension/3
 no_2$frame<-"2"
 no_2$flags<-"No stop in this frame"
+
 #limit to a single row each
 no_in<-unique(no_in)
 no_1<-unique(no_1)
@@ -224,23 +230,27 @@ no_in[setdiff(names(full_utr), names(no_in))] <- NA
 no_1[setdiff(names(full_utr), names(no_1))] <- NA
 no_2[setdiff(names(full_utr), names(no_2))] <- NA
 full_utr<-rbind(full_utr,no_in,no_1,no_2)
+fu2[setdiff(names(full_utr), names(fu2))] <- NA
+full_utr<-rbind(full_utr,fu2)
+
 remove(no_in,no_1,no_2)
 gc()
 
 #Calculate Utr losses
-full_utr$utr_loss_nt<-full_utr$nt_extension #Not inc ref stop, but does include new stop.
+full_utr$utr_loss_nt<-as.numeric(as.numeric(full_utr$Stop_start_position)-1)+3 #Not inc ref stop, but does include new stop
 full_utr$prop_utr_loss<-(full_utr$utr_loss_nt / full_utr$utr_length)*100
-full_utr$utr_loss_nt[which(full_utr$frame == "No Stop in any frame" | full_utr$frame == "No stop in this frame")]<-full_utr$utr_length[which(full_utr$frame == "No Stop in any frame" | full_utr$frame == "No stop in this frame")]
-full_utr$prop_utr_loss[which(full_utr$frame == "No Stop in any frame" | full_utr$frame == "No stop in this frame")] <- "100"
+full_utr$utr_loss_nt[which(full_utr$flags == "No stop in any frame" | full_utr$flags == "No stop in this frame")]<-full_utr$utr_length[which(full_utr$flags == "No stop in any frame" | full_utr$flags == "No stop in this frame")]
+full_utr$prop_utr_loss[which(full_utr$flags == "No stop in any frame" | full_utr$flags == "No stop in this frame")] <- "100"
 
 #Get relative distance for each stop for each frame
 full_utr$proximity<-""
+full_utr$nt_extension<-as.numeric(as.character(full_utr$nt_extension))
 full_utr$frame_id<-paste0(full_utr$ensembl_transcript_id,"_",full_utr$frame,sep="")
 pos<-full_utr[which(full_utr$strand=="+"),]
 neg<-full_utr[which(full_utr$strand=="-"),]
-none<-full_utr[which(is.na(full_utr$strand)),] #no stop in any frame
+none<-full_utr[which(full_utr$flags == "No stop in any frame"),] #no stop in any frame
 pos<- pos[order(pos$frame_id, pos$nt_extension), ] 
-neg<- neg[order(neg$frame_id,-neg$nt_extension),]
+neg<- neg[order(neg$frame_id, neg$nt_extension),]
 pos$proximity <- ave(pos$nt_extension, pos$frame_id, FUN = seq_along)
 neg$proximity <- ave(neg$nt_extension, neg$frame_id, FUN = seq_along)
 full_utr<-rbind(pos,neg,none)
@@ -251,7 +261,7 @@ gc()
 full_utr$percent_protein_gain<-(full_utr$nt_extension / as.numeric(full_utr$CDS_length_nt))*100
 
 #ADD MANE FLAG #INCLUDING Clinical
-mane<-read.gff(file = "/input/MANE.GRCh38.v1.2.ensembl_genomic.gff", na.strings = c(".", "?"), GFF3 = TRUE)[c(3,9)]
+mane<-read.gff(file = "/Users/alexmg/shiny_apps/stop_start_app/input/MANE.GRCh38.v1.2.ensembl_genomic.gff", na.strings = c(".", "?"), GFF3 = TRUE)[c(3,9)]
 mane<-subset(mane,type=="transcript")
 mane$ensembl_transcript_id<- str_match(mane$attributes, "transcript_id=*(.*?)\\.")[,2]
 mane$mane<- str_match(mane$attributes, "tag=*(.*?)[\\,\\;]")[,2]
@@ -264,11 +274,11 @@ full_utr$mane[which(is.na(full_utr$mane))]<-"Not a MANE transcript"
 ################# OUTPUT CORE DATA #################
 ####################################################
 fu2<-full_utr[,c(1:5,8,9,11,12,14:23,25,26)]
-write.table(fu2, file='/data/All_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(fu2, file='/Users/alexmg/shiny_apps/stop_start_app/data/All_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 closest_stop<-subset(fu2, proximity == 1)
 closest_stop$strand[which(closest_stop$strand == "-" )]<-"Negative"
 closest_stop$strand[which(closest_stop$strand == "+" )]<-"Positive"
-write.table(closest_stop, file='/data/Closest_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(closest_stop, file='/Users/alexmg/shiny_apps/stop_start_app/data/Closest_stops.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 remove(full_utr, fu2)
 gc()
 
@@ -276,17 +286,19 @@ gc()
 ####################################################
 ############ GENERATE PLOT DATA FOR APP ############
 ####################################################
-full_utr <- read.table('/data/All_stops.txt', header = TRUE, sep = '\t')
-closest_stop <- read.table('/data/Closest_stops.txt', header = TRUE, sep = '\t')
+full_utr <- read.table('/Users/alexmg/shiny_apps/stop_start_app/data/All_stops.txt', header = TRUE, sep = '\t')
+closest_stop <- read.table('/Users/alexmg/shiny_apps/stop_start_app/data/Closest_stops.txt', header = TRUE, sep = '\t')
 utr_tbl<-closest_stop[,c(1,2,6,7,9,12,14,16,21,20,11)]#ENS_Transcript_id	utr_length_3	strand	ENS_Gene_id	end_rna	CDS_length_nt	extension_NT	frame	MANE full_length	Original_cds
 colnames(utr_tbl)<-c("ENS_Transcript_id","utr_length_3","strand","Gene_symbol","end_rna","CDS_length_nt","extension_NT","frame","MANE","Proportion_extended","flags")
 utr_tbl$full_length<-utr_tbl$utr_length_3 + utr_tbl$CDS_length_nt
 utr_tbl$New_cds<-utr_tbl$CDS_length_nt + utr_tbl$extension_NT
 utr_tbl$flags[which(utr_tbl$extension_NT >= 150 & utr_tbl$flags != "No stop in this frame")]<-"Extenion more than 150 NT" #Flag any that are more than 150bp downstream of the original stop
-write.table(utr_tbl, file='/data/plot_full_utr.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
+write.table(utr_tbl, file='/Users/alexmg/shiny_apps/stop_start_app/data/plot_full_utr.txt', quote=FALSE, sep='\t', col.names = TRUE, row.names = FALSE)
 
 
 ####################################################
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 time.taken
+
+temp<-full_utr[which(!full_utr$aa_extension %% 1==0),]

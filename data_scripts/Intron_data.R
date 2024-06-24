@@ -3,7 +3,6 @@ library(ggplot2)
 library(dplyr)
 library(Biostrings)
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ###########################################################
 ########### GET INTRONS PROXIMAL TO STOP CODONS ###########
 ###########################################################
@@ -13,7 +12,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #################################################
 ########## Get Ensembl transcript data ##########
 #################################################
-d1 <- read.table('/data/full_havanna.txt', header = TRUE, sep = '\t')
+d1 <- read.table('/Users/alexmg/shiny_apps/stop_start_app/data/full_havanna.txt', header = TRUE, sep = '\t')
 
 #Find all introns
 intron_frame<-subset(d1, biotype == "protein_coding" & (V2 == "havana" | V2 == "ensembl_havana") & (V3 == "three_prime_utr" | V3 == "stop_codon" |V3 == "CDS"))
@@ -36,11 +35,11 @@ intron_frame$intron_start<-(intron_frame$V4 - intron_frame$intron_size)
 ########## FIND PROXIMAL INTRONS ##########
 ###########################################
 #Find Introns that are within 50bp of the start or end of a stop codon
-stop_coords <- read.table('/data/MAPS_bed_coord_rescue_stops_full.txt', header = TRUE, sep = '\t')[,c(1,3,4)]
+stop_coords <- read.table('/Users/alexmg/shiny_apps/stop_start_app/data/MAPS_bed_coord_rescue_stops_full.txt', header = TRUE, sep = '\t')[,c(1,3,4)]
 intron_frame<-merge(intron_frame,stop_coords, all.x=TRUE)
 int_match<-subset(intron_frame,  (between(intron_end, (end - 50),(end+50)) | between(intron_start, (end - 50),(end+50)) | between(end, intron_start,intron_end)))
 int_match<-int_match[c("ensembl_transcript_id","V3","intron_start","intron_end")]
 colnames(int_match)<-c("ensembl_transcript_id","Intron_type","intron_start","intron_end")
 int_match<-unique(int_match)
-write.table(int_match, file='/data/Reference_introns.txt', quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
+write.table(int_match, file='/Users/alexmg/shiny_apps/stop_start_app/data/Reference_introns.txt', quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
 
