@@ -1,6 +1,7 @@
 services:
   stopgapp:
     build: .
+    restart: unless-stopped
     hostname: stopgapp
     ports:
       - "3838:3838"

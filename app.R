@@ -12,7 +12,11 @@ library(stringr)
 options(shiny.port = 3838)
 # Check if the environment variable SHINY_PROD is set to 1
 if (Sys.getenv("SHINY_PROD") == "1") {
+<<<<<<< HEAD
   # Set working directory to /home/shiny-app in production
+=======
+  # Set working directory to /home/shiny-app
+>>>>>>> 884858f (Update deployment)
   setwd("/home/shiny-app")
 } else {
   # Get the path of the active document in RStudio
@@ -20,6 +24,11 @@ if (Sys.getenv("SHINY_PROD") == "1") {
   # Set working directory to the directory containing the active document
   setwd(dirname(active_doc_path))
 }
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 884858f (Update deployment)
 ##### Test Variants #####
 #x<-"cHr5:88722604_T/G" SNV (Disrupting) MEF2C -REV
 #x<-"cHr12:8941818_C/T" SNV (Preserving) M6PR -REV

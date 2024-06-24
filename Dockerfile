@@ -11,4 +11,9 @@ RUN R -e "install.packages(c('shiny', 'shinythemes', 'ggplot2', 'shinyjs', 'png'
 COPY app.R /home/shiny-app
 
 # Expose the application port
+<<<<<<< HEAD
 EXPOSE 3838
+=======
+EXPOSE 3838
+
+>>>>>>> 884858f (Update deployment)
