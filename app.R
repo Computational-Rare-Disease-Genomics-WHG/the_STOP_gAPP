@@ -16,7 +16,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #x<-"cHr12:8941818_C/T" SNV (Preserving) M6PR -REV t<-"ENST00000000412"
 #x<-"cHr5:88722604_TC/GA" MNV MEF2C -REV t<-"ENST00000504921"
 #x<-"cHr5:88722604_T/TA" Insertion MEF2C -REV
-#x<-"cHr5:88722604_TCA/T" Deletion MEF2C -REV #Double check transcript ENST00000503544 < clarify "not a known transcript"
+#x<-"cHr5:88722604_TCA/T" Deletion MEF2C -REV #Double check transcript ENST00000503544 
 #x<-"cHr12:106992782_TTTACCTAA/T" Deletion overlapping intron CRY1 -REV t<-"ENST00000549356" <-Does not loadfor T8527(Mane Select)
 #x<-"chr8:24508544_AGAG/TTGC" MNV starting in an intron (in a split stop)
 #x<-"chr13:97347004_GCGCAGCACCAAGCCAACCAAGCTGCGGTGGCCGCCCAGGCAGCCGCGGCCGCGGCCACAGTCA/GAGC" t<-"ENST00000469707" MNV overlapping an upstream intron
@@ -265,11 +265,11 @@ get_transcripts<-function(x){ #Retrieves a list of transcript IDs where the stop
 
 ## Generate the plot for GUI ##
 get_plot<-function(x,y,t,v){ #Transcript, frame,  type, variant
-  v<-"cHr5:88722604_TCA/T"
-  t<-"Deletion"
-  z<-""
-  y<-0
-  x<-tran_strip("ENST00000503554")
+  #v<-"cHr5:88722604_TCA/T"
+  #t<-"Deletion"
+  #z<-""
+  #y<-0
+  #x<-tran_strip("ENST00000503554")
   if(t == "SNV"){
     z<-get_pres(v) #Determine if the variant is stop disrupting
   }
@@ -328,6 +328,12 @@ get_plot<-function(x,y,t,v){ #Transcript, frame,  type, variant
         guides(color = guide_legend(reverse = TRUE))+
         labs(colour = "")
     }
+    if(is.na(stops$rna_start[which(stops$ensembl_transcript_id==x & stops$frame==y)])){
+      lab<-paste0("No Stop has been identified.", 
+                  "We have not been able to identify a downstream stop in this frame.
+      It is possible that this variant would lead to non-stop decay")
+      p<- ggplot() + annotate("text", x = 10,  y = 10, size = 6, label = lab) + theme_void()
+    }
   }
   if(t=="SNV"){
     if(z=="Stop preserving "){
@@ -365,12 +371,6 @@ get_plot<-function(x,y,t,v){ #Transcript, frame,  type, variant
       lab<-paste0("WARNING Intron:Exon junction variant",
                   "This variant spans one or more intron-exon junction and may affect splicing in addition to stop disruption. 
                 We would recommend running the variant through spliceAI Lookup to determine if splicing impact could supplement interpretation")
-      p<- ggplot() + annotate("text", x = 10,  y = 10, size = 6, label = lab) + theme_void()
-    }
-    if(is.na(stops$rna_start[which(stops$ensembl_transcript_id==x & stops$frame==y)])){
-      lab<-paste0("No Stop has been identified.", 
-      "We have not been able to identify a downstream stop in this frame.
-      It is possible that this variant would lead to non-stop decay")
       p<- ggplot() + annotate("text", x = 10,  y = 10, size = 6, label = lab) + theme_void()
     }
   }
