@@ -35,7 +35,6 @@ pres_var$match<-paste0(pres_var$chrom,":",pres_var$end,"_",pres_var$reference_al
 ref_stops<-read.csv(file = "data/basic_reference_stops.txt", sep = '\t', header = TRUE, na.strings=c("","NA")) #transcript ID, chrom, start, end and gene symbol for all stops (stops with introns span 2 lines)
 introns<-read.csv(file = "data/Reference_introns.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Coordinates of introns within 50bp of a stop
 stop_seq<-read.csv(file = "data/expanded_stop_seq.txt", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
-maps<-read.csv(file = "data/MAPS_bed_detail_rescue_stops.bed", sep = '\t', header = FALSE, na.strings=c("","NA")) #Stop codons with details of DNA sequence either side (by base)
 
 #Add Mane Flag to transcript dropdown
 mane<-unique(stops[which(stops$mane %in% c("MANE_Select","MANE_Plus_Clinical")),c(1,21)])
