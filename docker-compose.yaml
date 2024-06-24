@@ -1,0 +1,12 @@
+services:
+  stopgapp:
+    build: .
+    restart: unless-stopped
+    hostname: stopgapp
+    ports:
+      - "3838:3838"
+    command: Rscript /home/shiny-app/app-prod.R
+    volumes:
+      - ./data:/home/shiny-app/data
+    environment:
+      - SHINY_PROD=1
