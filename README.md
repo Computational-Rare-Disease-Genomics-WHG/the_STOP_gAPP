@@ -18,3 +18,6 @@ This folder contains all the background data used by the APP. Unfortunately due 
 This folder contains all scripts used to generate the base data used by the STOP g.APP <br />
 ## WWW:
 Logos and graphics used in the app
+
+#Contact
+If you need to get in touch, please reach out to alex.geary[at]well.ox.ac.uk / https://rarediseasegenomics.org 
