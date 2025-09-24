@@ -35,7 +35,7 @@ if [ ! -d "$DATA_PATH" ]; then
 fi
 
 # Pull the latest image from GitHub Container Registry
-if ! podman pull ghcr.io/Computational-Rare-Disease-Genomics-WHG/the_stop_gapp:latest; then
+if ! podman pull ghcr.io/computational-rare-disease-genomics-whg/the_stop_gapp:latest; then
     echo "Error: Failed to pull the image."
     exit 1
 fi
@@ -48,7 +48,7 @@ if ! podman run -d \
   -p 3838:3838 \
   -v "$DATA_PATH":/home/shiny-app/data \
   -e SHINY_PROD=1 \
-  ghcr.io/Computational-Rare-Disease-Genomics-WHG/the_stop_gapp:latest \
+  ghcr.io/computational-rare-disease-genomics-whg/the_stop_gapp:latest \
   Rscript /home/shiny-app/app-prod.R; then
     echo "Error: Failed to run the container."
     exit 1
