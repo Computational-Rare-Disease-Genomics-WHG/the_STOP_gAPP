@@ -5,7 +5,7 @@ FROM r-base
 RUN mkdir /home/shiny-app
 
 # Install R dependencies
-RUN R -e "install.packages(c('shiny', 'shinythemes', 'BiocManager', 'ggplot2', 'shinyjs', 'png', 'dplyr', 'stringr'), Ncpus=4, repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('shiny', 'shinythemes', 'ggplot2', 'shinyjs', 'png', 'dplyr', 'stringr'), Ncpus=4, repos='https://cloud.r-project.org/')"
 
 
 RUN apt-get update && apt-get install -y \
@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y \
 
 
 RUN R -e "install.packages(c('curl', 'openssl', 'httr'), Ncpus=4, repos='https://cloud.r-project.org/')"
+
+# Install BiocManager
+RUN R -e "install.packages('BiocManager', repos='https://cloud.r-project.org/')"
 
 # Install Bioconductor packages
 RUN R -e "BiocManager::install('Biostrings')"
