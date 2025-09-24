@@ -1,30 +1,47 @@
 #!/bin/bash
 
-# Default data path
-DATA_PATH="./data"
+# Check if podman is installed
+if ! command -v podman &> /dev/null; then
+    echo "Error: podman is not installed or not in PATH."
+    exit 1
+fi
 
 # Parse command line arguments
+if [ $# -eq 0 ]; then
+    echo "Error: DATA_PATH is required."
+    echo "Usage: $0 DATA_PATH"
+    echo "Use --help for more information."
+    exit 1
+fi
+
 if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-    echo "Usage: $0 [DATA_PATH]"
+    echo "Usage: $0 DATA_PATH"
     echo "Deploy the STOP gAPP container."
     echo ""
     echo "Arguments:"
-    echo "  DATA_PATH  Path to the data directory (default: ./data)"
+    echo "  DATA_PATH  Path to the data directory (required)"
     echo ""
     echo "Options:"
     echo "  --help, -h  Show this help message"
     exit 0
 fi
 
-if [ -n "$1" ]; then
-    DATA_PATH="$1"
+DATA_PATH="$1"
+
+# Check if the data path is a valid directory
+if [ ! -d "$DATA_PATH" ]; then
+    echo "Error: '$DATA_PATH' does not exist or is not a directory."
+    exit 1
 fi
 
 # Pull the latest image from GitHub Container Registry
-podman pull ghcr.io/Computational-Rare-Disease-Genomics-WHG/the_STOP_gAPP:latest
+if ! podman pull ghcr.io/Computational-Rare-Disease-Genomics-WHG/the_STOP_gAPP:latest; then
+    echo "Error: Failed to pull the image."
+    exit 1
+fi
 
 # Run the container
-podman run -d \
+if ! podman run -d \
   --name stopgapp \
   --restart unless-stopped \
   --hostname stopgapp \
@@ -32,4 +49,9 @@ podman run -d \
   -v "$DATA_PATH":/home/shiny-app/data \
   -e SHINY_PROD=1 \
   ghcr.io/Computational-Rare-Disease-Genomics-WHG/the_STOP_gAPP:latest \
-  Rscript /home/shiny-app/app-prod.R
+  Rscript /home/shiny-app/app-prod.R; then
+    echo "Error: Failed to run the container."
+    exit 1
+fi
+
+echo "Container 'stopgapp' started successfully."
