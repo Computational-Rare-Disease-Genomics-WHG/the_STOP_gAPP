@@ -42,6 +42,7 @@ fi
 
 # Run the container
 if ! podman run -d \
+  --replace \
   --name stopgapp \
   --restart unless-stopped \
   --hostname stopgapp \
